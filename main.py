@@ -60,7 +60,9 @@ def main():
         # --- The agentic tool loop ---
         # We keep calling Claude until it stops requesting tools.
         # Each iteration: send messages -> check response -> maybe execute tools -> repeat.
-        while True:
+        # Cap at 10 iterations to prevent runaway loops.
+        MAX_TOOL_ROUNDS = 10
+        for tool_round in range(MAX_TOOL_ROUNDS):
             response = client.messages.create(
                 model=model,
                 max_tokens=8096,
@@ -105,6 +107,10 @@ def main():
             # tool results go in a "user" message, and Claude will respond
             # with either more tool calls or a final text answer.
             messages.append({"role": "user", "content": tool_results})
+        else:
+            # Hit the max iterations limit without Claude finishing.
+            print("\n[stopped: too many tool rounds]")
+            print()
 
 
 if __name__ == "__main__":
