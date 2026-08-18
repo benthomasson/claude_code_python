@@ -1,5 +1,5 @@
 """
-A minimal Claude Code clone — an interactive REPL that talks to Claude via Vertex AI.
+A minimal Claude Code clone — an interactive REPL that talks to an LLM with tool use.
 
 The core loop:
 1. User types a message
@@ -12,21 +12,18 @@ The core loop:
 import os
 import sys
 
-from anthropic import AnthropicVertex
-
+from llm import create_provider
 from tools import TOOLS, execute_tool
 
 
 def main():
-    project = os.environ.get("GOOGLE_CLOUD_PROJECT")
-    region = os.environ.get("GOOGLE_CLOUD_REGION", "us-east5")
-    model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+    model = os.environ.get("MODEL") or os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
 
-    if not project:
-        print("Error: set GOOGLE_CLOUD_PROJECT environment variable")
+    try:
+        provider = create_provider(model)
+    except RuntimeError as e:
+        print(f"Error: {e}")
         sys.exit(1)
-
-    client = AnthropicVertex(project_id=project, region=region)
 
     system_prompt = (
         "You are a helpful coding assistant. You are running inside a CLI tool "
@@ -39,7 +36,7 @@ def main():
     # so Claude has full context of the session.
     messages = []
 
-    print("Claude Code (Python) — type 'quit' to exit")
+    print(f"Claude Code (Python) — model: {model} — type 'quit' to exit")
     print()
 
     while True:
@@ -63,12 +60,11 @@ def main():
         # Cap at 10 iterations to prevent runaway loops.
         MAX_TOOL_ROUNDS = 10
         for tool_round in range(MAX_TOOL_ROUNDS):
-            response = client.messages.create(
-                model=model,
-                max_tokens=8096,
-                system=system_prompt,
+            response = provider.send(
                 messages=messages,
+                system=system_prompt,
                 tools=TOOLS,
+                max_tokens=8096,
             )
 
             # Append Claude's full response (text + tool_use blocks) to history.

@@ -51,6 +51,25 @@ python main.py
 
 Then type your request at the `> ` prompt. Type `quit` or `exit` to end the session.
 
+## Models
+
+Set the `MODEL` environment variable to choose a backend. Defaults to Vertex AI with `claude-sonnet-4-20250514`.
+
+```bash
+# Vertex AI (default) — requires GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_REGION
+MODEL=claude-sonnet-4-20250514 python main.py
+
+# Ollama (local) — requires Ollama running (default: localhost:11434)
+MODEL=ollama:llama3.1 python main.py
+MODEL=ollama:qwen3:8b python main.py
+
+# Ollama on a remote host
+OLLAMA_HOST=http://192.168.1.100:11434 MODEL=ollama:llama3.1 python main.py
+
+# Direct Anthropic API — requires ANTHROPIC_API_KEY
+MODEL=api:claude-sonnet-4-20250514 python main.py
+```
+
 ## How it works
 
 1. Your input is sent to Claude via the Vertex AI Anthropic endpoint
