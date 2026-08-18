@@ -384,6 +384,13 @@ class _OllamaProvider:
         try:
             with urllib.request.urlopen(req, timeout=300) as resp:
                 result = json.loads(resp.read())
+        except urllib.error.HTTPError as e:
+            body = e.read().decode(errors="replace")
+            try:
+                detail = json.loads(body).get("error", body)
+            except (json.JSONDecodeError, ValueError):
+                detail = body
+            raise RuntimeError(f"Ollama error: {detail}") from e
         except urllib.error.URLError as e:
             raise RuntimeError(
                 f"Cannot connect to Ollama at {self.base_url} — is it running? ({e})"
